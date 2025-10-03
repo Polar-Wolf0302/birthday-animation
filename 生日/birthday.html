@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>生日快樂動畫 - 夜景星空</title>
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    background: black;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+  }
+  .message {
+    position: absolute;
+    font-size: 48px;
+    font-weight: bold;
+    text-align: center;
+    background: linear-gradient(to right, #ff99cc, #ffcc66, #66ccff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+    z-index: 1;
+    white-space: pre-line;
+  }
+  .show {
+    opacity: 1;
+  }
+</style>
+</head>
+<body>
+<canvas id="background"></canvas>
+<div class="message" id="msg"></div>
+
+<script>
+/* -------- 背景流星 + 閃爍星星 -------- */
+const canvas = document.getElementById('background');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+// 流星類
+class Meteor {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random()*canvas.width;
+    this.y = Math.random()*-canvas.height;
+    this.len = Math.random()*80+50;
+    this.speed = Math.random()*8+4;
+    this.angle = Math.PI/4;
+    this.opacity = Math.random()*0.6+0.4;
+  }
+  draw() {
+    const xEnd = this.x + this.len*Math.cos(this.angle);
+    const yEnd = this.y + this.len*Math.sin(this.angle);
+    const gradient = ctx.createLinearGradient(this.x,this.y,xEnd,yEnd);
+    gradient.addColorStop(0,`rgba(255,255,255,${this.opacity})`);
+    gradient.addColorStop(1,"rgba(255,255,255,0)");
+    ctx.strokeStyle = gradient;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(this.x,this.y);
+    ctx.lineTo(xEnd,yEnd);
+    ctx.stroke();
+  }
+  update() {
+    this.x += this.speed*Math.cos(this.angle);
+    this.y += this.speed*Math.sin(this.angle);
+    if(this.x>canvas.width||this.y>canvas.height){this.reset();}
+  }
+}
+
+// 閃爍星星類
+class Star {
+  constructor() {
+    this.x = Math.random()*canvas.width;
+    this.y = Math.random()*canvas.height;
+    this.radius = Math.random()*2+1;
+    this.baseAlpha = Math.random()*0.7+0.3; // 基本亮度
+    this.alpha = this.baseAlpha;
+    this.delta = Math.random()*0.02+0.005; // 閃爍速度
+  }
+  update() {
+    this.alpha += this.delta;
+    if(this.alpha >= 1 || this.alpha <= 0.2) this.delta *= -1;
+  }
+  draw() {
+    ctx.globalAlpha = this.alpha;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.radius,0,Math.PI*2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
+
+const meteors = [];
+for(let i=0;i<60;i++){meteors.push(new Meteor());}
+
+const stars = [];
+for(let i=0;i<150;i++){stars.push(new Star());}
+
+function animate() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  // 畫星星
+  for(let s of stars){ s.update(); s.draw(); }
+  // 畫流星
+  for(let m of meteors){ m.update(); m.draw(); }
+  requestAnimationFrame(animate);
+}
+animate();
+
+/* -------- 文字顯示 -------- */
+const messages = [
+  "3","2","1",
+  "生日快樂星雲",
+  "18歲快樂",
+  "願你擁有一個燦爛的未來",
+  "祝你學測順利",
+  "心想事成",
+  "天天開心",
+];
+const msgDiv = document.getElementById('msg');
+let index=0;
+
+function showMessage(){
+  msgDiv.classList.remove("show");
+  setTimeout(()=>{
+    msgDiv.innerText = messages[index];
+    msgDiv.classList.add("show");
+    index++;
+    if(index<messages.length){
+      setTimeout(showMessage,3500); // 每段3.5秒
+    } else {
+      // 文字播完後淡出
+      setTimeout(()=>{ msgDiv.style.display='none'; },3500);
+    }
+  },1000);
+}
+showMessage();
+</script>
+</body>
+</html>
